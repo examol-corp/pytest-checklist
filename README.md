@@ -41,6 +41,12 @@ This package adds a couple new options to the `pytest` CLI:
 This explicitly indicates to collect unit coverage results. If not specified,
 but `--pointers-report` is given results will be collected using the default.
 
+`--pointers-ignore=STR` (default ``)
+
+Specify files via a comma separated list of glob pattern relative to the
+`--pointers-collect` root directory to ignore. For example
+`utils.py,no_unit/*.py`.
+
 `--pointers-report` (default `False`)
 
 When this flag is given a textual report will be given at the end of the test
@@ -59,6 +65,7 @@ coverage check to pass. The percentage is always displayed even without
 `--pointers-report`. If this test is failed then the test process exits with
 code 1, which is useful for things like CI.
 
+
 #### Example
 
 Here is an example with source code under the `src` folder, requiring 1 pointer
@@ -72,9 +79,18 @@ pytest --pointers-report --pointers-collect=src --pointers-func-min-pass=1 --poi
 
 ### Installation
 
+<<<<<<< HEAD
+Just install from this git repository:
+
+``` shell
+pip install git+https://github.com/salotz/pytest-pointers.git
+```
+
+=======
 ``` shell
 pip install pytest_pointers
 ```
 
 
 
+>>>>>>> 453848dcc603cca982b2084292f0800cdcbd4125
