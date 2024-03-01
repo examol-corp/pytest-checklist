@@ -31,20 +31,20 @@ def pytest_addoption(parser):
         "--pointers-fail-under",
         action="store",
         dest="pointers_fail_under",
-        default=0.,
+        default=0.0,
         type=float,
         help="Minimum percentage of units to pass (exit 0), if greater than exit 1.",
     )
     group.addoption(
         "--pointers-collect",
         dest="pointers_collect",
-        default='src',
+        default="src",
         help="Gather targets and tests for them",
     )
     group.addoption(
         "--pointers-ignore",
         dest="pointers_ignore",
-        default='',
+        default="",
         help="Source files to ignore in collection, comma separated.",
     )
 
@@ -87,6 +87,7 @@ def _pointer_marker(request):
         pointers[target_full_name].append(request.node.nodeid)
         request.config.cache.set(CACHE_TARGETS, pointers)
 
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtestloop(session):
 
@@ -100,7 +101,7 @@ def pytest_runtestloop(session):
 
     pointers = session.config.cache.get(CACHE_TARGETS, {})
 
-    start_dir = Path(session.startdir) # noqa
+    start_dir = Path(session.startdir)  # noqa
 
     # the collect option can also tell where to start within the project,
     # otherwise it will collect a lot of wrong paths in virtualenvs etc.
@@ -115,7 +116,7 @@ def pytest_runtestloop(session):
         ignore_paths = set()
 
     else:
-        parts = ignore_str.split(',')
+        parts = ignore_str.split(",")
 
         # expand globs
         path_parts = []
@@ -123,9 +124,7 @@ def pytest_runtestloop(session):
             part_matches = list(source_dir.glob(part))
 
             if len(part_matches) == 0:
-                raise ValueError(
-                    f"No matches for pattern: {part}"
-                )
+                raise ValueError(f"No matches for pattern: {part}")
 
             path_parts.extend(part_matches)
 
@@ -186,18 +185,14 @@ def pytest_runtestloop(session):
     PERCENT_PASS = session.config.option.pointers_fail_under
 
     num_funcs = len(func_results)
-    total_passes = sum([
-        1 if res.is_pass else 0
-        for res
-        in func_results
-    ])
+    total_passes = sum([1 if res.is_pass else 0 for res in func_results])
 
     if total_passes == num_funcs:
         percent_passes = 100.0
     elif total_passes > 0:
         percent_passes = (total_passes / num_funcs) * 100
     else:
-        percent_passes = 0.
+        percent_passes = 0.0
 
     if percent_passes < PERCENT_PASS:
         session.testsfailed = 1
@@ -207,8 +202,3 @@ def pytest_runtestloop(session):
 
     console.print("END Pointers unit coverage")
     console.print("========================================")
-
-# def pytest_sessionfinish(
-#     session: pytest.Session,
-#     exitstatus: Union[int, pytest.ExitCode]
-# ):

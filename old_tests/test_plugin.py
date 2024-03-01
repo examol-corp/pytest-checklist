@@ -7,7 +7,7 @@ from pytest_pointers.plugin import _pointer_marker
 pytestmark = [pytest.mark.unit]
 
 
-@pytest.mark.pointer(target=_pointer_marker)
+# @pytest.mark.pointer(target=_pointer_marker)
 class TestPointerMarkerFixture:
     @staticmethod
     def get_params():
