@@ -51,12 +51,11 @@ class FuncFinder:
 
     def get_py_files(self) -> Set[Path]:
 
-        py_files = [
+        py_files = set([
             path
             for path in self.start_dir.glob("**/*.py")
             if path not in self.ignore_paths
-        ]
-        py_files = set(py_files)
+        ])
 
         for pattern in [".venv/**/*.py", "venv/**/*.py", "tests/**/*.py"]:
             py_files = py_files - set(self.start_dir.rglob(pattern))

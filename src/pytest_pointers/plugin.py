@@ -55,7 +55,9 @@ def pytest_configure(config):
 
 def pytest_sessionstart(session: pytest.Session):
     if session.config.option.pointers_collect or session.config.option.pointers_report:
-        session.config.cache.set(CACHE_TARGETS, {})
+
+        if session.config.cache is not None:
+            session.config.cache.set(CACHE_TARGETS, {})
 
 
 @pytest.fixture(scope="function", autouse=True)
