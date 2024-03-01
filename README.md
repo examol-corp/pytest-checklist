@@ -75,22 +75,12 @@ test per collected unit in the code, for all functions.
 pytest --pointers-report --pointers-collect=src --pointers-func-min-pass=1 --pointers-fail-under=100 tests
 ```
 
-![](https://jaklimoff-misc.s3.eu-central-1.amazonaws.com/pytest-pointers/example_output.jpg)
-
 ### Installation
 
-<<<<<<< HEAD
 Just install from this git repository:
 
 ``` shell
 pip install git+https://github.com/salotz/pytest-pointers.git
 ```
 
-=======
-``` shell
-pip install pytest_pointers
-```
-
-
-
->>>>>>> 453848dcc603cca982b2084292f0800cdcbd4125
+### Contributing
