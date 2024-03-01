@@ -1,29 +1,33 @@
-[tool.poetry]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
 name = "pytest-pointers"
 version = "0.3.2"
-description = "Pytest plugin to define functions you test with special marks for better navigation and reports"
-authors = ["Jack Klimov <jaklimoff@gmail.com>"]
+description = "Pytest plugin to trach and report unit coverage."
 readme = 'README.md'
-repository = "https://github.com/jaklimoff/pytest-pointers"
-homepage = "https://github.com/jaklimoff/pytest-pointers"
-keywords = ['plugin', 'pytest']
+license = "MIT"
 
-[tool.poetry.scripts]
-format = "poetry_deps_formatter:formatter"
+authors = [
+        { name = "Jack Klimov" },
+        { name = "Samuel Lotz", email = "salotz@salotz.info"},
+]
+maintainers = [
+        { name = "Samuel Lotz", email = "salotz@salotz.info"},
+]
+keywords = ['plugin', 'pytest', 'unit test']
 
-[tool.poetry.plugins."pytest11"]
+dependencies = [
+    "rich",
+    "libcst",
+]
+
+[project.urls]
+
+repository = "https://github.com/examol-corp/pytest-pointers"
+homepage = "https://github.com/examol-corp/pytest-pointers"
+
+
+[project.entry-points."pytest11"]
 plugin = "pytest_pointers.plugin"
-
-[tool.poetry.dependencies]
-python = "^3.7"
-rich = "*"                                        # Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal ·· https://pypi.org/project/rich/ 
-libcst = "^0.3.15"                                # A concrete syntax tree with AST-like properties for Python 3.5, 3.6, 3.7 and 3.8 programs. ·· https://pypi.org/project/libcst/ 
-
-[tool.poetry.dev-dependencies]
-pytest = "^6.1"                                   # pytest: simple powerful testing with Python ·· https://pypi.org/project/pytest/ 
-poetry-deps-formatter = "^0.1.1"                  # Beautify dependencies in pyproject.yaml based on poetry.lock ·· https://pypi.org/project/poetry-deps-formatter/ 
-black = {version = "^20.8b1", allow-prereleases = true}
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
