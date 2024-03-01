@@ -1,0 +1,14 @@
+line-length = 88
+
+# removes warning for some of the rule sets
+preview = true
+lint.select = ["E", "F", "B", "S"]
+lint.ignore = [
+    # allow extra whitespace
+    "E203",
+    # allow long lines
+    "E501",
+    # allow multiple '#' chars for comment "headings" of different
+    # levels
+    "E266",
+]

@@ -7,9 +7,13 @@ path = "src/pytest_pointers/__about__.py"
 dependencies = [
     "pytest",
     "black",
+    "ruff",
+    "mypy",
 ]
 
 [envs.default.scripts]
-
-test = "pytest tests"
 format = "black src tests"
+format_check = "black --check src tests"
+lint = "ruff src tests"
+typecheck = "mypy src"
+test = "pytest tests"
