@@ -1,0 +1,3 @@
+[version]
+
+path = "src/pytest_pointers/__about__.py"

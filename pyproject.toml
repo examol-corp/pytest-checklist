@@ -4,7 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pytest-pointers"
-version = "0.3.2"
+dynamic = ["version"]
+
 description = "Pytest plugin to trach and report unit coverage."
 readme = 'README.md'
 license = "MIT"
