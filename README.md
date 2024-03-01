@@ -84,3 +84,10 @@ pip install git+https://github.com/salotz/pytest-pointers.git
 ```
 
 ### Contributing
+
+You must install [hatch](https://hatch.pypa.io/latest/).
+
+```
+hatch run format
+hatch run test
+```

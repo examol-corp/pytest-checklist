@@ -1,3 +1,15 @@
 [version]
 
 path = "src/pytest_pointers/__about__.py"
+
+[envs.default]
+
+dependencies = [
+    "pytest",
+    "black",
+]
+
+[envs.default.scripts]
+
+test = "pytest tests"
+format = "black src tests"
