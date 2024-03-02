@@ -3,8 +3,9 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
+from pytest_pointers.app import is_passing, resolve_ignore_paths
 from pytest_pointers.defaults import DEFAULT_MIN_NUM_POINTERS, DEFAULT_PASS_THRESHOLD
-from pytest_pointers.utils import FuncFinder, FuncResult, is_passing
+from pytest_pointers.utils import FuncFinder, FuncResult, 
 from pytest_pointers.report import print_report, print_failed_coverage
 
 CACHE_TARGETS = "pointers/targets"
@@ -111,37 +112,7 @@ def pytest_runtestloop(session):
     source_dir = start_dir / session.config.option.pointers_collect
 
     # parse the ignore paths
-
-    ignore_str = session.config.option.pointers_ignore
-
-    # if nothing then don't ignore anything
-    if len(ignore_str) == 0:
-        ignore_paths = set()
-
-    else:
-        parts = ignore_str.split(",")
-
-        # expand globs
-        path_parts = []
-        for part in parts:
-            part_matches = list(source_dir.glob(part))
-
-            if len(part_matches) == 0:
-                raise ValueError(f"No matches for pattern: {part}")
-
-            path_parts.extend(part_matches)
-
-        ignore_paths = set((source_dir / Path(p)).resolve() for p in path_parts)
-
-        for ignore_path in ignore_paths:
-
-            if ignore_path.suffix != ".py":
-                raise ValueError(
-                    f"Ignored file path is not a Python file: {ignore_path}"
-                )
-
-            if not ignore_path.exists():
-                raise ValueError(f"Ignored file path does not exist: {ignore_path}")
+    ignore_paths = resolve_ignore_paths(session.config.option.pointers_ignore)
 
     # collect all the functions by scanning the source code
     funcs = FuncFinder(

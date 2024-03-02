@@ -7,6 +7,8 @@ from collections.abc import Collection
 import libcst as cst
 from libcst.metadata import QualifiedNameProvider, ParentNodeProvider
 
+    
+
 
 class MethodQualNamesCollector(cst.CSTVisitor):
     METADATA_DEPENDENCIES = (QualifiedNameProvider, ParentNodeProvider)
@@ -80,23 +82,3 @@ class FuncResult:
     name: str
     num_pointers: int
     is_pass: bool
-
-
-def is_passing(
-    results: list[FuncResult], percent_pass_threshold: float
-) -> tuple[float, bool]:
-
-    num_funcs = len(results)
-
-    total_passes = sum([1 if res.is_pass else 0 for res in results])
-
-    if total_passes == num_funcs:
-        percent_passes = 100.0
-    elif total_passes > 0:
-        percent_passes = (total_passes / num_funcs) * 100
-    else:
-        percent_passes = 0.0
-
-    passes = percent_passes >= percent_pass_threshold
-
-    return percent_passes, passes
