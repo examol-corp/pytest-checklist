@@ -12,3 +12,20 @@ lint.ignore = [
     # levels
     "E266",
 ]
+
+[lint.per-file-ignores]
+
+"tests/*" = [
+    # allow assert
+    "S101",
+    # allow `assert False` for missing tests
+    "B011",
+    # ignore "pythonic" comparisons to booleans, for clarity in
+    # writing tests e.g. `assert thing is False`
+    "E712",
+    # its okay to have subprocess in tests
+    "S603",
+    "S404",
+    # don't be strict about unused assigned variables
+    "F841",
+]

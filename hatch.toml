@@ -14,6 +14,6 @@ dependencies = [
 [envs.default.scripts]
 format = "black src tests"
 format_check = "black --check src tests"
-lint = "ruff src tests"
+lint = "ruff check src tests"
 typecheck = "mypy src"
 test = "pytest tests"
