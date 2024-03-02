@@ -1,19 +1,26 @@
 from pathlib import Path
+import sys
+import itertools as it
 
 import pytest
 from rich.console import Console
 
 from pytest_pointers.pointer import resolve_pointer_mark_target
-from pytest_pointers.app import is_passing, resolve_ignore_paths
+from pytest_pointers.app import is_passing, resolve_ignore_patterns
 from pytest_pointers.defaults import DEFAULT_MIN_NUM_POINTERS, DEFAULT_PASS_THRESHOLD
-from pytest_pointers.utils import FuncFinder, FuncResult, collect_case_passes
-from pytest_pointers.report import print_report, print_failed_coverage
+from pytest_pointers.collector import (
+    collect_case_passes,
+    detect_files,
+    resolve_fq_modules,
+    resolve_fq_targets,
+)
+from pytest_pointers.report import make_report
 
 CACHE_TARGETS = "pointers/targets"
 CACHE_ALL_FUNC = "pointers/funcs"
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser):  # nopointer:
     group = parser.getgroup("pointers")
     group.addoption(
         "--pointers-report",
@@ -52,11 +59,11 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config):  # nopointer:
     config.addinivalue_line("markers", "pointer(element): Define a tested element.")
 
 
-def pytest_sessionstart(session: pytest.Session):
+def pytest_sessionstart(session: pytest.Session):  # nopointer:
     if session.config.option.pointers_collect or session.config.option.pointers_report:
 
         if session.config.cache is not None:
@@ -64,7 +71,7 @@ def pytest_sessionstart(session: pytest.Session):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def _pointer_marker(request):
+def _pointer_marker(request):  # nopointer:
     """Fixture that is autoinjected to each test case.
 
     It will detect if there is a pointer marker and register this test
@@ -72,13 +79,11 @@ def _pointer_marker(request):
 
     """
 
-    
     if (
         not request.config.option.pointers_collect
         and not request.config.option.pointers_report
     ):
         return None
-
 
     # load the cached pointers, or create if not existing
 
@@ -86,9 +91,8 @@ def _pointer_marker(request):
     # to record coverage for) and the test cases that target it. Each
     # test case has a "pointer" to the target.
     target_pointers: dict[str, set[str]] = {
-        target : set(pointers)
-        for target, pointers
-        in request.config.cache.get(CACHE_TARGETS, {}).items()
+        target: set(pointers)
+        for target, pointers in request.config.cache.get(CACHE_TARGETS, {}).items()
     }
 
     # for this test, grab the first marker which is a pointer
@@ -108,16 +112,14 @@ def _pointer_marker(request):
         target_pointers[pointer.full_name].add(request.node.nodeid)
 
     # then save the updated pointers to the cache
-    request.config.cache.set(CACHE_TARGETS,
-                             {
-                                 target : list(pointers)
-                                 for target, pointers
-                                 in target_pointers.items()
-                             })
+    request.config.cache.set(
+        CACHE_TARGETS,
+        {target: list(pointers) for target, pointers in target_pointers.items()},
+    )
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtestloop(session):
+def pytest_runtestloop(session):  # nopointer:
 
     # do the report here so we can give the exit code, in pytest_sessionfinish
     # you cannot alter the exit code
@@ -127,7 +129,7 @@ def pytest_runtestloop(session):
 
     # after the runtestloop is finished we can generate the report etc.
 
-    pointers = session.config.cache.get(CACHE_TARGETS, {})
+    target_pointers = session.config.cache.get(CACHE_TARGETS, {})
 
     start_dir = Path(session.startdir)
 
@@ -136,17 +138,25 @@ def pytest_runtestloop(session):
     source_dir = start_dir / session.config.option.pointers_collect
 
     # parse the ignore paths
-    ignore_paths = resolve_ignore_paths(source_dir, session.config.option.pointers_ignore)
+    ignore_patterns = resolve_ignore_patterns(session.config.option.pointers_ignore)
 
     # collect all the functions by scanning the source code
-    func_finder = FuncFinder(
-        source_dir,
-        ignore_paths=ignore_paths,
+
+    # first collect all files to look in
+    check_paths = detect_files(source_dir, ignore_patterns)
+
+    check_modules = resolve_fq_modules(
+        check_paths,
+        [Path(p) for p in sys.path],
     )
+
+    targets = resolve_fq_targets(check_modules)
 
     # collect the pass/fails for all the units
     func_results = collect_case_passes(
-        pointers, func_finder, session.config.option.pointers_func_min_pass
+        target_pointers,
+        it.chain(*targets.values()),
+        session.config.option.pointers_func_min_pass,
     )
 
     # test whether the whole thing passed
@@ -159,14 +169,25 @@ def pytest_runtestloop(session):
 
     console = Console()
 
+    console.print("")
+    console.print("")
+    console.print("----------------------")
+    console.print("Pointers unit coverage")
+    console.print("========================================")
+
+    if session.config.option.pointers_report:
+        report_padding = make_report(func_results)
+
+        console.print(report_padding)
+
     if not passes:
 
         session.testsfailed = 1
 
-        print_failed_coverage(console, percent_pass_threshold, percent_passes)
-
-    print_report(
-        console,
-        func_results,
-        report=session.config.option.pointers_report,
+    console.print(
+        f"[bold red]Pointers unit coverage failed. Target was {percent_pass_threshold}, achieved {percent_passes}.[/bold red]"
     )
+    console.print("")
+
+    console.print("END Pointers unit coverage")
+    console.print("========================================")

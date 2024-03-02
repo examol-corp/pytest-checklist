@@ -1,12 +1,9 @@
 """Tools for generating reports"""
 
 from textwrap import dedent
-from dataclasses import dataclass
-
-from rich.console import Console
 from rich.padding import Padding
 
-from pytest_pointers.utils import FuncResult
+from pytest_pointers.collector import FuncResult
 
 
 def make_report(func_results: list[FuncResult]) -> Padding:
@@ -34,41 +31,3 @@ def make_report(func_results: list[FuncResult]) -> Padding:
     )
 
     return Padding(report, (2, 4), expand=False)
-
-
-def print_report(
-    console: Console,
-    func_results: list[FuncResult],
-    report: bool = False,
-) -> None:
-    """Print the report.
-
-    Args
-        report: If true will print the whole report.
-
-    """
-    console.print("")
-    console.print("")
-    console.print("----------------------")
-    console.print("Pointers unit coverage")
-    console.print("========================================")
-
-    if report:
-
-        report_padding = make_report(func_results)
-
-        console.print(report_padding)
-
-    console.print("END Pointers unit coverage")
-    console.print("========================================")
-
-
-def print_failed_coverage(
-    console: Console,
-    percent_pass_threshold: float,
-    percent_passes: float,
-) -> None:
-
-    console.print(
-        f"[bold red]Pointers unit coverage failed. Target was {percent_pass_threshold}, achieved {percent_passes}.[/bold red]"
-    )

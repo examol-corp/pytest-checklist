@@ -1,40 +1,14 @@
 """Stuff for dealing with configuration, inputs, etc."""
 
-from pathlib import Path
-
-from pytest_pointers.utils import FuncResult
+from pytest_pointers.collector import FuncResult
 
 
-def resolve_ignore_paths(source_dir: Path, ignore_str: str) -> set[Path]:
+def resolve_ignore_patterns(ignore_str: str) -> set[str]:
     if len(ignore_str) == 0:
-        ignore_paths = set()
+        return set()
 
     else:
-        parts = ignore_str.split(",")
-
-        # expand globs
-        path_parts = []
-        for part in parts:
-            part_matches = list(source_dir.glob(part))
-
-            if len(part_matches) == 0:
-                raise ValueError(f"No matches for pattern: {part}")
-
-            path_parts.extend(part_matches)
-
-        ignore_paths = set((source_dir / Path(p)).resolve() for p in path_parts)
-
-        for ignore_path in ignore_paths:
-
-            if ignore_path.suffix != ".py":
-                raise ValueError(
-                    f"Ignored file path is not a Python file: {ignore_path}"
-                )
-
-            if not ignore_path.exists():
-                raise ValueError(f"Ignored file path does not exist: {ignore_path}")
-
-    return ignore_paths
+        return set(ignore_str.split(","))
 
 
 def is_passing(

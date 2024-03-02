@@ -3,10 +3,12 @@ from typing import Callable, Any
 
 import pytest
 
+
 @dataclass
 class Pointer:
     target: Callable[Any, Any]
     full_name: str
+
 
 def resolve_pointer_mark_target(mark: pytest.Mark) -> Pointer:
 
@@ -32,11 +34,11 @@ def resolve_pointer_mark_target(mark: pytest.Mark) -> Pointer:
 
     return resolve_target_pointer(target)
 
-def resolve_target_pointer(target: Callable[Any,Any]) -> Pointer:
+
+def resolve_target_pointer(target: Callable[Any, Any]) -> Pointer:
 
     # NOTE: currently only supports functions
     return Pointer(
         target=target,
         full_name=f"{target.__module__}.{target.__qualname__}",
     )
-
