@@ -7,8 +7,6 @@ from collections.abc import Collection
 import libcst as cst
 from libcst.metadata import QualifiedNameProvider, ParentNodeProvider
 
-    
-
 
 class MethodQualNamesCollector(cst.CSTVisitor):
     METADATA_DEPENDENCIES = (QualifiedNameProvider, ParentNodeProvider)
@@ -82,3 +80,29 @@ class FuncResult:
     name: str
     num_pointers: int
     is_pass: bool
+
+
+def collect_case_passes(
+    pointers, func_finder: FuncFinder, func_min_pass: int
+) -> list[FuncResult]:
+
+    func_results = []
+    for func in func_finder:
+        test_count = len(pointers.get(func, []))
+
+        is_pass = False
+
+        if test_count >= func_min_pass:
+            is_pass = True
+        else:
+            is_pass = False
+
+        func_results.append(
+            FuncResult(
+                name=func,
+                num_pointers=test_count,
+                is_pass=is_pass,
+            )
+        )
+
+    return func_results

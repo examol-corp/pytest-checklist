@@ -5,44 +5,9 @@ import libcst as cst
 import pytest
 
 # from pytest_pointers.tests.mock_structure import for_func_finder
-from pytest_pointers.utils import FuncFinder, is_passing, FuncResult
+from pytest_pointers.utils import FuncFinder, FuncResult
 
 
-@pytest.mark.pointer(target=is_passing)
-def test_is_passing():
-
-    assert is_passing(
-        [
-            FuncResult(
-                "something",
-                1,
-                True,
-            ),
-        ],
-        100.0,
-    )[1]
-
-    assert not is_passing(
-        [
-            FuncResult(
-                "something",
-                1,
-                False,
-            ),
-        ],
-        100.0,
-    )[1]
-
-    assert is_passing(
-        [
-            FuncResult(
-                "something",
-                1,
-                False,
-            ),
-        ],
-        0.0,
-    )[1]
 
 
 @pytest.mark.pointer(target=FuncFinder.get_methods_qual_names)

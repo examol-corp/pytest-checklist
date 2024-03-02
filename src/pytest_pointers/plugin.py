@@ -5,7 +5,7 @@ from rich.console import Console
 
 from pytest_pointers.app import is_passing, resolve_ignore_paths
 from pytest_pointers.defaults import DEFAULT_MIN_NUM_POINTERS, DEFAULT_PASS_THRESHOLD
-from pytest_pointers.utils import FuncFinder, FuncResult, 
+from pytest_pointers.utils import FuncFinder, FuncResult, collect_case_passes
 from pytest_pointers.report import print_report, print_failed_coverage
 
 CACHE_TARGETS = "pointers/targets"
@@ -112,34 +112,18 @@ def pytest_runtestloop(session):
     source_dir = start_dir / session.config.option.pointers_collect
 
     # parse the ignore paths
-    ignore_paths = resolve_ignore_paths(session.config.option.pointers_ignore)
+    ignore_paths = resolve_ignore_paths(source_dir, session.config.option.pointers_ignore)
 
     # collect all the functions by scanning the source code
-    funcs = FuncFinder(
+    func_finder = FuncFinder(
         source_dir,
         ignore_paths=ignore_paths,
     )
 
     # collect the pass/fails for all the units
-
-    func_results = []
-    for func in funcs:
-        test_count = len(pointers.get(func, []))
-
-        is_pass = False
-
-        if test_count >= session.config.option.pointers_func_min_pass:
-            is_pass = True
-        else:
-            is_pass = False
-
-        func_results.append(
-            FuncResult(
-                name=func,
-                num_pointers=test_count,
-                is_pass=is_pass,
-            )
-        )
+    func_results = collect_case_passes(
+        pointers, func_finder, session.config.option.pointers_func_min_pass
+    )
 
     # test whether the whole thing passed
     if session.config.option.pointers_fail_under is None:

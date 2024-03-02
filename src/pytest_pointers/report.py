@@ -37,8 +37,8 @@ def make_report(func_results: list[FuncResult]) -> Padding:
 
 
 def print_report(
-        console: Console,
-        func_results: list[FuncResult],
+    console: Console,
+    func_results: list[FuncResult],
     report: bool = False,
 ) -> None:
     """Print the report.
@@ -55,16 +55,16 @@ def print_report(
 
     if report:
 
-        report = make_report(func_results)
+        report_padding = make_report(func_results)
 
-        console.print(report)
+        console.print(report_padding)
 
     console.print("END Pointers unit coverage")
     console.print("========================================")
 
 
 def print_failed_coverage(
-        console: Console,
+    console: Console,
     percent_pass_threshold: float,
     percent_passes: float,
 ) -> None:

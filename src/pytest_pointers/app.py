@@ -2,7 +2,10 @@
 
 from pathlib import Path
 
-def resolve_ignore_paths(ignore_spec: str) -> set[Path]:
+from pytest_pointers.utils import FuncResult
+
+
+def resolve_ignore_paths(source_dir: Path, ignore_str: str) -> set[Path]:
     if len(ignore_str) == 0:
         ignore_paths = set()
 
@@ -32,6 +35,7 @@ def resolve_ignore_paths(ignore_spec: str) -> set[Path]:
                 raise ValueError(f"Ignored file path does not exist: {ignore_path}")
 
     return ignore_paths
+
 
 def is_passing(
     results: list[FuncResult], percent_pass_threshold: float
