@@ -1,10 +1,11 @@
 from pathlib import Path
-from typing import Union
 
 import pytest
 from rich.console import Console
 
-from pytest_pointers.utils import FuncFinder, make_report, MIN_NUM_POINTERS, FuncResult
+from pytest_pointers.defaults import DEFAULT_MIN_NUM_POINTERS, DEFAULT_PASS_THRESHOLD
+from pytest_pointers.utils import FuncFinder, FuncResult, is_passing
+from pytest_pointers.report import print_report, print_failed_coverage
 
 CACHE_TARGETS = "pointers/targets"
 CACHE_ALL_FUNC = "pointers/funcs"
@@ -23,7 +24,7 @@ def pytest_addoption(parser):
         "--pointers-func-min-pass",
         action="store",
         dest="pointers_func_min_pass",
-        default=MIN_NUM_POINTERS,
+        default=DEFAULT_MIN_NUM_POINTERS,
         type=int,
         help="Minimum number of pointer marks for a unit to pass.",
     )
@@ -103,7 +104,7 @@ def pytest_runtestloop(session):
 
     pointers = session.config.cache.get(CACHE_TARGETS, {})
 
-    start_dir = Path(session.startdir)  # noqa
+    start_dir = Path(session.startdir)
 
     # the collect option can also tell where to start within the project,
     # otherwise it will collect a lot of wrong paths in virtualenvs etc.
@@ -169,38 +170,24 @@ def pytest_runtestloop(session):
             )
         )
 
-    console = Console()
-    console.print("")
-    console.print("")
-    console.print("----------------------")
-    console.print("Pointers unit coverage")
-    console.print("========================================")
-
-    if session.config.option.pointers_report:
-
-        report = make_report(func_results)
-
-        # console.print("")
-        console.print(report)
-
     # test whether the whole thing passed
-    PERCENT_PASS = session.config.option.pointers_fail_under
-
-    num_funcs = len(func_results)
-    total_passes = sum([1 if res.is_pass else 0 for res in func_results])
-
-    if total_passes == num_funcs:
-        percent_passes = 100.0
-    elif total_passes > 0:
-        percent_passes = (total_passes / num_funcs) * 100
+    if session.config.option.pointers_fail_under is None:
+        percent_pass_threshold = DEFAULT_PASS_THRESHOLD
     else:
-        percent_passes = 0.0
+        percent_pass_threshold = session.config.option.pointers_fail_under
 
-    if percent_passes < PERCENT_PASS:
+    percent_passes, passes = is_passing(func_results, percent_pass_threshold)
+
+    console = Console()
+
+    if not passes:
+
         session.testsfailed = 1
-        console.print(
-            f"[bold red]Pointers unit coverage failed. Target was {PERCENT_PASS}, achieved {percent_passes}.[/bold red]"
-        )
 
-    console.print("END Pointers unit coverage")
-    console.print("========================================")
+        print_failed_coverage(console, percent_pass_threshold, percent_passes)
+
+    print_report(
+        console,
+        func_results,
+        report=session.config.option.pointers_report,
+    )

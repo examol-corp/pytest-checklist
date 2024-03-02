@@ -2,15 +2,10 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Set
-from textwrap import dedent
 from collections.abc import Collection
 
 import libcst as cst
 from libcst.metadata import QualifiedNameProvider, ParentNodeProvider
-
-from rich.padding import Padding
-
-MIN_NUM_POINTERS = 2
 
 
 class MethodQualNamesCollector(cst.CSTVisitor):
@@ -51,11 +46,13 @@ class FuncFinder:
 
     def get_py_files(self) -> Set[Path]:
 
-        py_files = set([
-            path
-            for path in self.start_dir.glob("**/*.py")
-            if path not in self.ignore_paths
-        ])
+        py_files = set(
+            [
+                path
+                for path in self.start_dir.glob("**/*.py")
+                if path not in self.ignore_paths
+            ]
+        )
 
         for pattern in [".venv/**/*.py", "venv/**/*.py", "tests/**/*.py"]:
             py_files = py_files - set(self.start_dir.rglob(pattern))
@@ -85,28 +82,21 @@ class FuncResult:
     is_pass: bool
 
 
-def make_report(func_results: list[FuncResult]):
+def is_passing(
+    results: list[FuncResult], percent_pass_threshold: float
+) -> tuple[float, bool]:
 
-    def report_line(func_result: FuncResult):
+    num_funcs = len(results)
 
-        if func_result.is_pass:
-            color = "green"
-        elif func_result.num_pointers > 0:
-            color = "blue"
-        else:
-            color = "red"
+    total_passes = sum([1 if res.is_pass else 0 for res in results])
 
-        test_count_str = f"{func_result.num_pointers: <2}"
-        return f"[{color}]{test_count_str:·<5}[/{color}] {func_result.name}"
+    if total_passes == num_funcs:
+        percent_passes = 100.0
+    elif total_passes > 0:
+        percent_passes = (total_passes / num_funcs) * 100
+    else:
+        percent_passes = 0.0
 
-    report_lines = "\n".join([report_line(func_result) for func_result in func_results])
+    passes = percent_passes >= percent_pass_threshold
 
-    report = dedent(
-        f"""
-        [bold]List of functions in project and the number of tests for them[/bold]
-
-        \n{report_lines}
-        """
-    )
-
-    return Padding(report, (2, 4), expand=False)
+    return percent_passes, passes

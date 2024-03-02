@@ -5,7 +5,44 @@ import libcst as cst
 import pytest
 
 # from pytest_pointers.tests.mock_structure import for_func_finder
-from pytest_pointers.utils import FuncFinder
+from pytest_pointers.utils import FuncFinder, is_passing, FuncResult
+
+
+@pytest.mark.pointer(target=is_passing)
+def test_is_passing():
+
+    assert is_passing(
+        [
+            FuncResult(
+                "something",
+                1,
+                True,
+            ),
+        ],
+        100.0,
+    )[1]
+
+    assert not is_passing(
+        [
+            FuncResult(
+                "something",
+                1,
+                False,
+            ),
+        ],
+        100.0,
+    )[1]
+
+    assert is_passing(
+        [
+            FuncResult(
+                "something",
+                1,
+                False,
+            ),
+        ],
+        0.0,
+    )[1]
 
 
 @pytest.mark.pointer(target=FuncFinder.get_methods_qual_names)
@@ -104,7 +141,7 @@ from pytest_pointers.utils import FuncFinder
         ),
     ],
 )
-def test__func_called__result_returned(self, module, expect):
+def test_get_methods_qual_names(module, expect):
     tree = cst.parse_module(module)
 
     result = list(FuncFinder.get_methods_qual_names(tree))
@@ -112,20 +149,19 @@ def test__func_called__result_returned(self, module, expect):
     assert result == expect
 
 
-# @pytest.mark.pointer(target=FuncFinder.__iter__)
-# class TestFuncFinderIter:
-#     def test__func_called__result_returned(
-#         self,
-#     ):
-#         funcs = FuncFinder(Path(for_func_finder.__file__).parent)
+@pytest.mark.pointer(target=FuncFinder.__iter__)
+def test___iter__(
+    test_data_dir,
+):
+    funcs = FuncFinder(test_data_dir / "mock_structure")
 
-#         assert set(funcs) == {
-#             "pytest_pointers.tests.mock_structure.for_func_finder.Some.__init__",
-#             "pytest_pointers.tests.mock_structure.for_func_finder.Some.for_test",
-#             "pytest_pointers.tests.mock_structure.for_func_finder.Another.__init__",
-#             "pytest_pointers.tests.mock_structure.for_func_finder.for_test",
-#             "pytest_pointers.tests.mock_structure.for_func_finder.Another.for_test",
-#         }
+    assert set(funcs) == {
+        "pytest_pointers.tests.mock_structure.for_func_finder.Some.__init__",
+        "pytest_pointers.tests.mock_structure.for_func_finder.Some.for_test",
+        "pytest_pointers.tests.mock_structure.for_func_finder.Another.__init__",
+        "pytest_pointers.tests.mock_structure.for_func_finder.for_test",
+        "pytest_pointers.tests.mock_structure.for_func_finder.Another.for_test",
+    }
 
 
 @pytest.mark.pointer(target=FuncFinder.get_py_files)
@@ -164,7 +200,7 @@ def test__func_called__result_returned(self, module, expect):
         ),
     ],
 )
-def test__func_called__result_returned(tmp_path, files, files_ignored):
+def test_get_py_files(tmp_path, files, files_ignored):
     files_path = [tmp_path / Path(f) for f in files]
     files_ignored_path = [tmp_path / Path(f) for f in files_ignored]
 
