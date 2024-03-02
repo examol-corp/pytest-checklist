@@ -3,4 +3,8 @@ def quick():
 
 
 def fox():
-    pass
+
+    # regression test to make sure it doesn't choke on matches
+    match "A":
+        case "A":
+            pass
