@@ -20,7 +20,7 @@ CACHE_TARGETS = "pointers/targets"
 CACHE_ALL_FUNC = "pointers/funcs"
 
 
-def pytest_addoption(parser):  # nopointer:
+def pytest_addoption(parser) -> None:  # nopointer:
     group = parser.getgroup("pointers")
     group.addoption(
         "--pointers-report",
@@ -59,11 +59,11 @@ def pytest_addoption(parser):  # nopointer:
     )
 
 
-def pytest_configure(config):  # nopointer:
+def pytest_configure(config) -> None:  # nopointer:
     config.addinivalue_line("markers", "pointer(element): Define a tested element.")
 
 
-def pytest_sessionstart(session: pytest.Session):  # nopointer:
+def pytest_sessionstart(session: pytest.Session) -> None:  # nopointer:
     if session.config.option.pointers_collect or session.config.option.pointers_report:
 
         if session.config.cache is not None:
@@ -71,7 +71,7 @@ def pytest_sessionstart(session: pytest.Session):  # nopointer:
 
 
 @pytest.fixture(scope="function", autouse=True)
-def _pointer_marker(request):  # nopointer:
+def _pointer_marker(request) -> None:  # nopointer:
     """Fixture that is autoinjected to each test case.
 
     It will detect if there is a pointer marker and register this test
@@ -119,7 +119,7 @@ def _pointer_marker(request):  # nopointer:
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtestloop(session):  # nopointer:
+def pytest_runtestloop(session) -> None:  # nopointer:
 
     # do the report here so we can give the exit code, in pytest_sessionfinish
     # you cannot alter the exit code
@@ -143,7 +143,7 @@ def pytest_runtestloop(session):  # nopointer:
     # collect all the functions by scanning the source code
 
     # first collect all files to look in
-    check_paths = detect_files(source_dir, ignore_patterns)
+    check_paths = detect_files(source_dir, list(ignore_patterns))
 
     check_modules = resolve_fq_modules(
         check_paths,

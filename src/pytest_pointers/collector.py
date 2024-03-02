@@ -1,3 +1,4 @@
+from typing import Union, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from collections import defaultdict
@@ -36,15 +37,15 @@ class MethodQualNamesCollector(cst.CSTVisitor):
 
 def detect_files(
     start_dir: Path,
-    ignore_patterns: list[str] = None,
+        ignore_patterns: Union[list[str], None] = None,
 ) -> list[Path]:
     """Given the path and ignores return the set of files to parse."""
 
     # first identify all the paths to ignore
-    ignore_paths = set()
+    ignore_paths: set[Path] = set()
     if ignore_patterns is not None:
         for pattern in ignore_patterns:
-            ignore_paths |= start_dir.rglob(pattern)
+            ignore_paths |= set(start_dir.rglob(pattern))
 
     # then enumerate all the other paths, without the ignores.
     paths = set(
@@ -126,7 +127,7 @@ class FuncResult:
 
 def collect_case_passes(
     target_pointers: dict[str, set[str]],
-    targets: Target,
+    targets: Iterable[Target],
     num_min_pass: int,
 ) -> list[FuncResult]:
 
