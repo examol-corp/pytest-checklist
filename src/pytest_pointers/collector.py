@@ -18,7 +18,7 @@ class MethodQualNamesCollector(cst.CSTVisitor):
         self.found = []
         super().__init__()
 
-    def visit_FunctionDef(self, node: cst.FunctionDef):
+    def visit_FunctionDef(self, node: cst.FunctionDef):  # nopointer: DEBUG
         header = getattr(node.body, "header", None)
         excluded = (
             header is not None
