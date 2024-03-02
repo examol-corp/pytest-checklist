@@ -10,6 +10,15 @@ class Pointer:
     full_name: str
 
 
+def resolve_target_pointer(target: Callable[..., Any]) -> Pointer:
+
+    # NOTE: currently only supports functions
+    return Pointer(
+        target=target,
+        full_name=f"{target.__module__}.{target.__qualname__}",
+    )
+
+
 def resolve_pointer_mark_target(mark: pytest.Mark) -> Pointer:
 
     # support writing pointers in two ways:
@@ -33,12 +42,3 @@ def resolve_pointer_mark_target(mark: pytest.Mark) -> Pointer:
         raise ValueError("No positional or kwarg given for pointer target.")
 
     return resolve_target_pointer(target)
-
-
-def resolve_target_pointer(target: Callable[..., Any]) -> Pointer:
-
-    # NOTE: currently only supports functions
-    return Pointer(
-        target=target,
-        full_name=f"{target.__module__}.{target.__qualname__}",
-    )

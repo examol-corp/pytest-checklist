@@ -6,7 +6,7 @@ from rich.padding import Padding
 from pytest_pointers.collector import FuncResult
 
 
-def make_report(func_results: list[FuncResult]) -> Padding:
+def make_report(func_results: list[FuncResult]) -> Padding:  # nopointer:
 
     def report_line(func_result: FuncResult):
 

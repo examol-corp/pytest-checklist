@@ -14,7 +14,7 @@ class MethodQualNamesCollector(cst.CSTVisitor):
 
     METADATA_DEPENDENCIES = (QualifiedNameProvider, ParentNodeProvider)
 
-    def __init__(self):
+    def __init__(self):  # nopointer:
         self.found = []
         super().__init__()
 
