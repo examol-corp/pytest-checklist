@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 from rich.console import Console
 
+from pytest_pointers.pointer import resolve_pointer_mark_target
 from pytest_pointers.app import is_passing, resolve_ignore_paths
 from pytest_pointers.defaults import DEFAULT_MIN_NUM_POINTERS, DEFAULT_PASS_THRESHOLD
 from pytest_pointers.utils import FuncFinder, FuncResult, collect_case_passes
@@ -64,32 +65,55 @@ def pytest_sessionstart(session: pytest.Session):
 
 @pytest.fixture(scope="function", autouse=True)
 def _pointer_marker(request):
+    """Fixture that is autoinjected to each test case.
+
+    It will detect if there is a pointer marker and register this test
+    case to the target.
+
+    """
+
+    
     if (
         not request.config.option.pointers_collect
         and not request.config.option.pointers_report
     ):
-        return
+        return None
 
-    pointers = request.config.cache.get(CACHE_TARGETS, {})
-    marker = request.node.get_closest_marker("pointer")
-    if marker:
-        target_full_name = None
-        if "target" in marker.kwargs:
-            # support for regular pointers
-            # @pytest.mark.pointer(target=Some.for_test)
-            target = marker.kwargs.get("target", None)
-            target_full_name = f"{target.__module__}.{target.__qualname__}"
-        elif len(marker.args) == 2:
-            # support for property pointers
-            # @pytest.mark.pointer(Some, 'for_test')
-            target_parent, target_member = marker.args
-            target_full_name = f"{target_parent.__module__}.{target_parent.__qualname__}.{target_member}"
 
-        if target_full_name not in pointers:
-            pointers[target_full_name] = []
+    # load the cached pointers, or create if not existing
 
-        pointers[target_full_name].append(request.node.nodeid)
-        request.config.cache.set(CACHE_TARGETS, pointers)
+    # this is a structure mapping a unique 'target' (the unit you want
+    # to record coverage for) and the test cases that target it. Each
+    # test case has a "pointer" to the target.
+    target_pointers: dict[str, set[str]] = {
+        target : set(pointers)
+        for target, pointers
+        in request.config.cache.get(CACHE_TARGETS, {}).items()
+    }
+
+    # for this test, grab the first marker which is a pointer
+    maybe_mark = request.node.get_closest_marker("pointer")
+
+    # if present we handle it
+    if maybe_mark is not None:
+
+        pointer = resolve_pointer_mark_target(maybe_mark)
+
+        # if there is no pointers to this target registered already,
+        # initialize a list to store them in
+        if pointer.full_name not in target_pointers:
+            target_pointers[pointer.full_name] = set()
+
+        # then we add this "nodeid" which is the specific test case
+        target_pointers[pointer.full_name].add(request.node.nodeid)
+
+    # then save the updated pointers to the cache
+    request.config.cache.set(CACHE_TARGETS,
+                             {
+                                 target : list(pointers)
+                                 for target, pointers
+                                 in target_pointers.items()
+                             })
 
 
 @pytest.hookimpl(hookwrapper=True)
