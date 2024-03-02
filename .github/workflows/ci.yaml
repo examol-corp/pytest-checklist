@@ -1,0 +1,49 @@
+name: QA
+on: push
+jobs:
+
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Ensure latest pip
+        run: python -m pip install --upgrade pip
+
+      - name: Tooling
+        run: pip install hatch
+
+      - name: Format Check
+        run: hatch run format_check
+
+      - name: Lint
+        run: hatch run lint
+
+        
+  # runs as a matrix
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Ensure latest pip
+        run: python -m pip install --upgrade pip
+
+      - name: Tooling
+        run: pip install hatch
+
+      - name: Typecheck
+        run: hatch run typecheck
+
+      - name: Test
+        run: hatch run test
