@@ -37,7 +37,7 @@ class MethodQualNamesCollector(cst.CSTVisitor):
 
 def detect_files(
     start_dir: Path,
-        ignore_patterns: Union[list[str], None] = None,
+    ignore_patterns: Union[list[str], None] = None,
 ) -> list[Path]:
     """Given the path and ignores return the set of files to parse."""
 

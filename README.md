@@ -209,13 +209,37 @@ pip install git+https://github.com/examol-corp/pytest-pointers.git
 
 You must install [hatch](https://hatch.pypa.io/latest/).
 
+### Install Hooks
+
+Uses the [lefthook](https://github.com/evilmartians/lefthook) hook
+runner.
+
+You will need to run this once to have hooks run on git pre-commit:
+
+```sh
+lefthook install
+```
+
 ### Testing, linting, etc.
 
+You can just run all QA with:
+
+```sh
+lefthook run pre-commit
 ```
+
+Or individually:
+
+```sh
 hatch run format_check
-hatch run format
 hatch run lint
 hatch run typecheck
+```
+
+You can run the other tasks manually:
+
+```sh
+hatch run format
 hatch run test
 ```
 
