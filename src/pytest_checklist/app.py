@@ -1,28 +1,38 @@
 """Stuff for dealing with configuration, inputs, etc."""
 
-from pytest_checklist.collector import FuncResult
+from dataclasses import dataclass
+
+from pytest_checklist.collector import TargetResult
 
 
-def resolve_ignore_patterns(ignore_str: str) -> set[str]:
-    if len(ignore_str) == 0:
+@dataclass
+class TargetReport:
+
+    result: TargetResult
+    passes: bool
+
+
+def resolve_exclude_patterns(exclude_str: str) -> set[str]:
+    if len(exclude_str) == 0:
         return set()
 
     else:
-        return set(ignore_str.split(","))
+        return set(exclude_str.split(","))
 
 
 def is_passing(
-    results: list[FuncResult], percent_pass_threshold: float
+    reports: list[TargetReport],
+    percent_pass_threshold: float,
 ) -> tuple[float, bool]:
 
-    num_funcs = len(results)
+    num_targets = sum([1 for report in reports if not report.result.target.ignored])
 
-    total_passes = sum([1 if res.is_pass else 0 for res in results])
+    total_passes = sum([1 if report.passes else 0 for report in reports])
 
-    if total_passes == num_funcs:
+    if total_passes == num_targets:
         percent_passes = 100.0
     elif total_passes > 0:
-        percent_passes = (total_passes / num_funcs) * 100
+        percent_passes = (total_passes / num_targets) * 100
     else:
         percent_passes = 0.0
 

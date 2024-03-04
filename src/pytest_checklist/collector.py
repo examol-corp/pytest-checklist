@@ -15,30 +15,34 @@ class MethodQualNamesCollector(cst.CSTVisitor):
     METADATA_DEPENDENCIES = (QualifiedNameProvider, ParentNodeProvider)
 
     def __init__(self):  # nochecklist:
-        self.found = []
+        self.found = set()
+        self.ignored = set()
         super().__init__()
 
-    def visit_FunctionDef(self, node: cst.FunctionDef):  # nochecklist: DEBUG
+    def visit_FunctionDef(self, node: cst.FunctionDef):  # nochecklist: TODO
+
         header = getattr(node.body, "header", None)
-        excluded = (
+        ignored = (
             header is not None
             and header.comment
             and header.comment.value.find(DEFAULT_NO_COVER_TOKEN) > -1
         )
 
-        if not excluded:
-            # TODO: Find better way to remove locals
-            qual_names = self.get_metadata(QualifiedNameProvider, node)
-            for qn in qual_names:
-                from_local = qn.name.find("<locals>") > -1
-                if not from_local:
-                    self.found.append(qn.name)
+        # TODO: Find better way to remove locals
+        qual_names = self.get_metadata(QualifiedNameProvider, node)
+        for qn in qual_names:
+            from_local = qn.name.find("<locals>") > -1
+            if not from_local:
+
+                self.found.add(qn.name)
+                if ignored:
+                    self.ignored.add(qn.name)
 
 
 def detect_files(
     start_dir: Path,
     ignore_patterns: Union[list[str], None] = None,
-) -> list[Path]:
+) -> tuple[list[Path], list[Path]]:
     """Given the path and ignores return the set of files to parse."""
 
     # first identify all the paths to ignore
@@ -53,7 +57,7 @@ def detect_files(
     )
 
     # return them in a sorted order so the output later on is stable
-    return sorted(paths)
+    return sorted(paths), sorted(list(ignore_paths))
 
 
 @dataclass(eq=True, frozen=True)
@@ -68,6 +72,7 @@ class Target:
 
     module: Module
     name: str
+    ignored: bool = False
 
     def fq_name(self) -> str:
         return f"{self.module.fq_module_name}.{self.name}"
@@ -106,11 +111,11 @@ def resolve_fq_targets(
         # with the tree use the collector to retrieve the method names
         collector = MethodQualNamesCollector()
         cst.MetadataWrapper(module_cst).visit(collector)
+
         for method_name in collector.found:
 
             target = Target(
-                module,
-                method_name,
+                module, method_name, ignored=(method_name in collector.ignored)
             )
 
             targets[module.fq_module_name].add(target)
@@ -119,30 +124,25 @@ def resolve_fq_targets(
 
 
 @dataclass
-class FuncResult:
-    name: str
+class TargetResult:
+    target: Target
     num_pointers: int
-    is_pass: bool
 
 
 def collect_case_passes(
     target_pointers: dict[str, set[str]],
     targets: Iterable[Target],
-    num_min_pass: int,
-) -> list[FuncResult]:
+) -> list[TargetResult]:
 
-    func_results = []
+    target_results = []
     for target in targets:
         test_count: int = len(target_pointers.get(target.fq_name(), {}))
 
-        is_pass = test_count >= num_min_pass
-
-        func_results.append(
-            FuncResult(
-                name=target.fq_name(),
+        target_results.append(
+            TargetResult(
+                target=target,
                 num_pointers=test_count,
-                is_pass=is_pass,
             )
         )
 
-    return func_results
+    return target_results

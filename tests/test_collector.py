@@ -7,7 +7,7 @@ from pytest_checklist.collector import (
     resolve_fq_targets,
     collect_case_passes,
     Target,
-    FuncResult,
+    TargetResult,
     Module,
 )
 
@@ -128,10 +128,9 @@ def test_collect_case_passes():
             "mod.a.baz": {},
         },
         targets,
-        1,
     ) == [
-        FuncResult("mod.a.foo", 2, True),
-        FuncResult("mod.a.bar", 1, True),
-        FuncResult("mod.a.baz", 0, False),
-        FuncResult("mod.a.quux", 0, False),
+        TargetResult(Target(mod, "foo"), 2),
+        TargetResult(Target(mod, "bar"), 1),
+        TargetResult(Target(mod, "baz"), 0),
+        TargetResult(Target(mod, "quux"), 0),
     ]

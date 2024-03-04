@@ -6,7 +6,7 @@ import pytest
 from rich.console import Console
 
 from pytest_checklist.pointer import resolve_pointer_mark_target
-from pytest_checklist.app import is_passing, resolve_ignore_patterns
+from pytest_checklist.app import is_passing, resolve_exclude_patterns, TargetReport
 from pytest_checklist.defaults import DEFAULT_MIN_NUM_POINTERS, DEFAULT_PASS_THRESHOLD
 from pytest_checklist.collector import (
     collect_case_passes,
@@ -30,9 +30,9 @@ def pytest_addoption(parser) -> None:  # nochecklist:
         help="Show report in console",
     )
     group.addoption(
-        "--checklist-func-min-pass",
+        "--checklist-target-min-pass",
         action="store",
-        dest="checklist_func_min_pass",
+        dest="checklist_target_min_pass",
         default=DEFAULT_MIN_NUM_POINTERS,
         type=int,
         help="Minimum number of pointer marks for a unit to pass.",
@@ -41,7 +41,7 @@ def pytest_addoption(parser) -> None:  # nochecklist:
         "--checklist-fail-under",
         action="store",
         dest="checklist_fail_under",
-        default=0.0,
+        default=DEFAULT_PASS_THRESHOLD,
         type=float,
         help="Minimum percentage of units to pass (exit 0), if greater than exit 1.",
     )
@@ -52,10 +52,17 @@ def pytest_addoption(parser) -> None:  # nochecklist:
         help="Gather targets and tests for them",
     )
     group.addoption(
-        "--checklist-ignore",
-        dest="checklist_ignore",
+        "--checklist-exclude",
+        dest="checklist_exclude",
         default="",
-        help="Source files to ignore in collection, comma separated.",
+        help="Source files to exclude from collection, comma separated. Excluded files will not be collected and cannot be reported as ignored.",
+    )
+    group.addoption(
+        "--checklist-report-ignored",
+        action="store_true",
+        dest="checklist_report_ignored",
+        default=False,
+        help="Show ignored units in checklist report.",
     )
 
 
@@ -140,13 +147,13 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
     # otherwise it will collect a lot of wrong paths in virtualenvs etc.
     source_dir = start_dir / session.config.option.checklist_collect
 
-    # parse the ignore paths
-    ignore_patterns = resolve_ignore_patterns(session.config.option.checklist_ignore)
+    # parse the exclude paths
+    exclude_patterns = resolve_exclude_patterns(session.config.option.checklist_exclude)
 
     # collect all the functions by scanning the source code
 
     # first collect all files to look in
-    check_paths = detect_files(source_dir, list(ignore_patterns))
+    check_paths, _ = detect_files(source_dir, list(exclude_patterns))
 
     check_modules = resolve_fq_modules(
         check_paths,
@@ -156,19 +163,23 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
     targets = resolve_fq_targets(check_modules)
 
     # collect the pass/fails for all the units
-    func_results = collect_case_passes(
+    target_results = collect_case_passes(
         target_pointers,
         it.chain(*targets.values()),
-        session.config.option.checklist_func_min_pass,
     )
 
-    # test whether the whole thing passed
-    if session.config.option.checklist_fail_under is None:
-        percent_pass_threshold = DEFAULT_PASS_THRESHOLD
-    else:
-        percent_pass_threshold = session.config.option.checklist_fail_under
+    target_min_pass = session.config.option.checklist_target_min_pass
+    fail_under = session.config.option.checklist_fail_under
 
-    percent_passes, passes = is_passing(func_results, percent_pass_threshold)
+    target_reports = []
+    for result in target_results:
+
+        target_reports.append(
+            TargetReport(result, passes=result.num_pointers >= target_min_pass)
+        )
+
+    # test whether the whole thing passed
+    percent_passes, passes = is_passing(target_reports, fail_under)
 
     console = Console()
 
@@ -178,8 +189,13 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
     console.print("Checklist unit coverage")
     console.print("========================================")
 
+    console.print(f"Minimum number of pointers per target: {target_min_pass}")
+
     if session.config.option.checklist_report:
-        report_padding = make_report(func_results)
+        report_padding = make_report(
+            target_reports,
+            show_ignored=session.config.option.checklist_report_ignored,
+        )
 
         console.print(report_padding)
 
@@ -188,14 +204,14 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
         session.testsfailed = 1
 
         console.print(
-            f"[bold red]Checklist unit coverage failed. Target was {percent_pass_threshold}, achieved {percent_passes}.[/bold red]"
+            f"[bold red]Checklist unit coverage failed. Target was {fail_under}, achieved {percent_passes}.[/bold red]"
         )
         console.print("")
 
     else:
 
         console.print(
-            f"[bold green]Checklist unit coverage passed! Target was {percent_pass_threshold}, achieved {percent_passes}.[/bold green]"
+            f"[bold green]Checklist unit coverage passed! Target was {fail_under}, achieved {percent_passes}.[/bold green]"
         )
         console.print("")
 
