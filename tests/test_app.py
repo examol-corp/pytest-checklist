@@ -19,6 +19,11 @@ def test_is_passing():
                 1,
                 True,
             ),
+            FuncResult(
+                "other",
+                1,
+                True,
+            ),
         ],
         100.0,
     )[1]

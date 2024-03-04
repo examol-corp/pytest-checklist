@@ -64,7 +64,10 @@ def pytest_configure(config) -> None:  # nochecklist:
 
 
 def pytest_sessionstart(session: pytest.Session) -> None:  # nochecklist:
-    if session.config.option.checklist_collect or session.config.option.checklist_report:
+    if (
+        session.config.option.checklist_collect
+        or session.config.option.checklist_report
+    ):
 
         if session.config.cache is not None:
             session.config.cache.set(CACHE_TARGETS, {})
@@ -184,10 +187,17 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
 
         session.testsfailed = 1
 
-    console.print(
-        f"[bold red]Checklist unit coverage failed. Target was {percent_pass_threshold}, achieved {percent_passes}.[/bold red]"
-    )
-    console.print("")
+        console.print(
+            f"[bold red]Checklist unit coverage failed. Target was {percent_pass_threshold}, achieved {percent_passes}.[/bold red]"
+        )
+        console.print("")
+
+    else:
+
+        console.print(
+            f"[bold green]Checklist unit coverage passed! Target was {percent_pass_threshold}, achieved {percent_passes}.[/bold green]"
+        )
+        console.print("")
 
     console.print("END Checklist unit coverage")
     console.print("========================================")
