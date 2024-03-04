@@ -1,6 +1,6 @@
 [version]
 
-path = "src/pytest_pointers/__about__.py"
+path = "src/pytest_checklist/__about__.py"
 
 [envs.default]
 

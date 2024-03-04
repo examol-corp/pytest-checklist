@@ -3,10 +3,10 @@
 from textwrap import dedent
 from rich.padding import Padding
 
-from pytest_pointers.collector import FuncResult
+from pytest_checklist.collector import FuncResult
 
 
-def make_report(func_results: list[FuncResult]) -> Padding:  # nopointer:
+def make_report(func_results: list[FuncResult]) -> Padding:  # nochecklist:
 
     def report_line(func_result: FuncResult):
 

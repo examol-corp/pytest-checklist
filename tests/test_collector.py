@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 
-from pytest_pointers.collector import (
+from pytest_checklist.collector import (
     resolve_fq_modules,
     detect_files,
     resolve_fq_targets,

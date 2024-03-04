@@ -5,73 +5,73 @@ import itertools as it
 import pytest
 from rich.console import Console
 
-from pytest_pointers.pointer import resolve_pointer_mark_target
-from pytest_pointers.app import is_passing, resolve_ignore_patterns
-from pytest_pointers.defaults import DEFAULT_MIN_NUM_POINTERS, DEFAULT_PASS_THRESHOLD
-from pytest_pointers.collector import (
+from pytest_checklist.pointer import resolve_pointer_mark_target
+from pytest_checklist.app import is_passing, resolve_ignore_patterns
+from pytest_checklist.defaults import DEFAULT_MIN_NUM_POINTERS, DEFAULT_PASS_THRESHOLD
+from pytest_checklist.collector import (
     collect_case_passes,
     detect_files,
     resolve_fq_modules,
     resolve_fq_targets,
 )
-from pytest_pointers.report import make_report
+from pytest_checklist.report import make_report
 
-CACHE_TARGETS = "pointers/targets"
-CACHE_ALL_FUNC = "pointers/funcs"
+CACHE_TARGETS = "checklist/targets"
+CACHE_ALL_FUNC = "checklist/funcs"
 
 
-def pytest_addoption(parser) -> None:  # nopointer:
-    group = parser.getgroup("pointers")
+def pytest_addoption(parser) -> None:  # nochecklist:
+    group = parser.getgroup("checklist")
     group.addoption(
-        "--pointers-report",
+        "--checklist-report",
         action="store_true",
-        dest="pointers_report",
+        dest="checklist_report",
         default=False,
         help="Show report in console",
     )
     group.addoption(
-        "--pointers-func-min-pass",
+        "--checklist-func-min-pass",
         action="store",
-        dest="pointers_func_min_pass",
+        dest="checklist_func_min_pass",
         default=DEFAULT_MIN_NUM_POINTERS,
         type=int,
         help="Minimum number of pointer marks for a unit to pass.",
     )
     group.addoption(
-        "--pointers-fail-under",
+        "--checklist-fail-under",
         action="store",
-        dest="pointers_fail_under",
+        dest="checklist_fail_under",
         default=0.0,
         type=float,
         help="Minimum percentage of units to pass (exit 0), if greater than exit 1.",
     )
     group.addoption(
-        "--pointers-collect",
-        dest="pointers_collect",
+        "--checklist-collect",
+        dest="checklist_collect",
         default="src",
         help="Gather targets and tests for them",
     )
     group.addoption(
-        "--pointers-ignore",
-        dest="pointers_ignore",
+        "--checklist-ignore",
+        dest="checklist_ignore",
         default="",
         help="Source files to ignore in collection, comma separated.",
     )
 
 
-def pytest_configure(config) -> None:  # nopointer:
+def pytest_configure(config) -> None:  # nochecklist:
     config.addinivalue_line("markers", "pointer(element): Define a tested element.")
 
 
-def pytest_sessionstart(session: pytest.Session) -> None:  # nopointer:
-    if session.config.option.pointers_collect or session.config.option.pointers_report:
+def pytest_sessionstart(session: pytest.Session) -> None:  # nochecklist:
+    if session.config.option.checklist_collect or session.config.option.checklist_report:
 
         if session.config.cache is not None:
             session.config.cache.set(CACHE_TARGETS, {})
 
 
 @pytest.fixture(scope="function", autouse=True)
-def _pointer_marker(request) -> None:  # nopointer:
+def _pointer_marker(request) -> None:  # nochecklist:
     """Fixture that is autoinjected to each test case.
 
     It will detect if there is a pointer marker and register this test
@@ -80,8 +80,8 @@ def _pointer_marker(request) -> None:  # nopointer:
     """
 
     if (
-        not request.config.option.pointers_collect
-        and not request.config.option.pointers_report
+        not request.config.option.checklist_collect
+        and not request.config.option.checklist_report
     ):
         return None
 
@@ -119,7 +119,7 @@ def _pointer_marker(request) -> None:  # nopointer:
 
 
 @pytest.hookimpl(hookwrapper=True)
-def pytest_runtestloop(session) -> None:  # nopointer:
+def pytest_runtestloop(session) -> None:  # nochecklist:
 
     # do the report here so we can give the exit code, in pytest_sessionfinish
     # you cannot alter the exit code
@@ -135,10 +135,10 @@ def pytest_runtestloop(session) -> None:  # nopointer:
 
     # the collect option can also tell where to start within the project,
     # otherwise it will collect a lot of wrong paths in virtualenvs etc.
-    source_dir = start_dir / session.config.option.pointers_collect
+    source_dir = start_dir / session.config.option.checklist_collect
 
     # parse the ignore paths
-    ignore_patterns = resolve_ignore_patterns(session.config.option.pointers_ignore)
+    ignore_patterns = resolve_ignore_patterns(session.config.option.checklist_ignore)
 
     # collect all the functions by scanning the source code
 
@@ -156,14 +156,14 @@ def pytest_runtestloop(session) -> None:  # nopointer:
     func_results = collect_case_passes(
         target_pointers,
         it.chain(*targets.values()),
-        session.config.option.pointers_func_min_pass,
+        session.config.option.checklist_func_min_pass,
     )
 
     # test whether the whole thing passed
-    if session.config.option.pointers_fail_under is None:
+    if session.config.option.checklist_fail_under is None:
         percent_pass_threshold = DEFAULT_PASS_THRESHOLD
     else:
-        percent_pass_threshold = session.config.option.pointers_fail_under
+        percent_pass_threshold = session.config.option.checklist_fail_under
 
     percent_passes, passes = is_passing(func_results, percent_pass_threshold)
 
@@ -172,10 +172,10 @@ def pytest_runtestloop(session) -> None:  # nopointer:
     console.print("")
     console.print("")
     console.print("----------------------")
-    console.print("Pointers unit coverage")
+    console.print("Checklist unit coverage")
     console.print("========================================")
 
-    if session.config.option.pointers_report:
+    if session.config.option.checklist_report:
         report_padding = make_report(func_results)
 
         console.print(report_padding)
@@ -185,9 +185,9 @@ def pytest_runtestloop(session) -> None:  # nopointer:
         session.testsfailed = 1
 
     console.print(
-        f"[bold red]Pointers unit coverage failed. Target was {percent_pass_threshold}, achieved {percent_passes}.[/bold red]"
+        f"[bold red]Checklist unit coverage failed. Target was {percent_pass_threshold}, achieved {percent_passes}.[/bold red]"
     )
     console.print("")
 
-    console.print("END Pointers unit coverage")
+    console.print("END Checklist unit coverage")
     console.print("========================================")

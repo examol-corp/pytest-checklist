@@ -1,6 +1,6 @@
 """Stuff for dealing with configuration, inputs, etc."""
 
-from pytest_pointers.collector import FuncResult
+from pytest_checklist.collector import FuncResult
 
 
 def resolve_ignore_patterns(ignore_str: str) -> set[str]:

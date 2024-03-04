@@ -6,7 +6,7 @@ from collections import defaultdict
 import libcst as cst
 from libcst.metadata import QualifiedNameProvider, ParentNodeProvider
 
-from pytest_pointers.defaults import DEFAULT_NO_COVER_TOKEN
+from pytest_checklist.defaults import DEFAULT_NO_COVER_TOKEN
 
 
 class MethodQualNamesCollector(cst.CSTVisitor):
@@ -14,11 +14,11 @@ class MethodQualNamesCollector(cst.CSTVisitor):
 
     METADATA_DEPENDENCIES = (QualifiedNameProvider, ParentNodeProvider)
 
-    def __init__(self):  # nopointer:
+    def __init__(self):  # nochecklist:
         self.found = []
         super().__init__()
 
-    def visit_FunctionDef(self, node: cst.FunctionDef):  # nopointer: DEBUG
+    def visit_FunctionDef(self, node: cst.FunctionDef):  # nochecklist: DEBUG
         header = getattr(node.body, "header", None)
         excluded = (
             header is not None

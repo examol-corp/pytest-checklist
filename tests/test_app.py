@@ -1,7 +1,7 @@
 import pytest
 
-from pytest_pointers.collector import FuncResult
-from pytest_pointers.app import resolve_ignore_patterns, is_passing
+from pytest_checklist.collector import FuncResult
+from pytest_checklist.app import resolve_ignore_patterns, is_passing
 
 
 @pytest.mark.pointer(target=resolve_ignore_patterns)

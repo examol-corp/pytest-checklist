@@ -3,10 +3,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "pytest-pointers"
+name = "pytest-checklist"
 dynamic = ["version"]
 
-description = "Pytest plugin to trach and report unit coverage."
+description = "Pytest plugin to track and report unit/function coverage."
 readme = 'README.md'
 license = "MIT"
 
@@ -19,7 +19,7 @@ maintainers = [
 ]
 keywords = ['plugin', 'pytest', 'unit test']
 
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 dependencies = [
     "rich",
     "libcst",
@@ -27,9 +27,9 @@ dependencies = [
 
 [project.urls]
 
-repository = "https://github.com/examol-corp/pytest-pointers"
-homepage = "https://github.com/examol-corp/pytest-pointers"
+repository = "https://github.com/examol-corp/pytest-checklist"
+homepage = "https://github.com/examol-corp/pytest-checklist"
 
 
 [project.entry-points."pytest11"]
-plugin = "pytest_pointers.plugin"
+plugin = "pytest_checklist.plugin"

@@ -1,3 +1,3 @@
 class Some:
-    def for_test(self):  # nopointer:
+    def for_test(self):  # nochecklist:
         pass

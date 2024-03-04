@@ -1,6 +1,6 @@
 import pytest
 
-from pytest_pointers.pointer import (
+from pytest_checklist.pointer import (
     resolve_pointer_mark_target,
     resolve_target_pointer,
     Pointer,
