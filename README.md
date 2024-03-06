@@ -151,6 +151,11 @@ When this flag is given the final report will also display the ignored
 targets that were collected but will not fail. Note that anything
 excluded will not be in this collection.
 
+`--checklist-report-passing` (default `False`)
+
+When this flag is given the final report will display all the passing
+targets. Otherwise, only the failing target lines will be shown.
+
 
 #### Example
 

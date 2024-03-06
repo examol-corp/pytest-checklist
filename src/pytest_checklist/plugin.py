@@ -64,6 +64,13 @@ def pytest_addoption(parser) -> None:  # nochecklist:
         default=False,
         help="Show ignored units in checklist report.",
     )
+    group.addoption(
+        "--checklist-report-passing",
+        action="store_true",
+        dest="checklist_report_passing",
+        default=False,
+        help="Show passing units in checklist report.",
+    )
 
 
 def pytest_configure(config) -> None:  # nochecklist:
@@ -192,9 +199,11 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
     console.print(f"Minimum number of pointers per target: {target_min_pass}")
 
     if session.config.option.checklist_report:
+        
         report_padding = make_report(
             target_reports,
             show_ignored=session.config.option.checklist_report_ignored,
+            show_passing=session.config.option.checklist_report_passing,
         )
 
         console.print(report_padding)
