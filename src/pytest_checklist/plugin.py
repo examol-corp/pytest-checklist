@@ -199,7 +199,7 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
     console.print(f"Minimum number of pointers per target: {target_min_pass}")
 
     if session.config.option.checklist_report:
-        
+
         report_padding = make_report(
             target_reports,
             show_ignored=session.config.option.checklist_report_ignored,

@@ -7,7 +7,9 @@ from pytest_checklist.app import TargetReport
 
 
 def make_report(
-        target_reports: list[TargetReport], show_ignored: bool = False, show_passing: bool = False,
+    target_reports: list[TargetReport],
+    show_ignored: bool = False,
+    show_passing: bool = False,
 ) -> Padding:  # nochecklist: Just renders a display
 
     def report_line(target_report: TargetReport):
@@ -46,8 +48,8 @@ def make_report(
             report_line(target_report)
             for target_report in target_reports
             if not (
-                    (not show_ignored and target_report.result.target.ignored)
-                    or (not show_passing and target_report.passes)
+                (not show_ignored and target_report.result.target.ignored)
+                or (not show_passing and target_report.passes)
             )
         ]
     )
