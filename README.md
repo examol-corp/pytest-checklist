@@ -114,6 +114,12 @@ def test_func():
 
 This package adds a couple new options to the `pytest` CLI:
 
+`--checklist-disabled` (default `False`)
+
+When this is given will explicitly disable this plugin from all
+collection and reporting. Useful for running non-unit tests.
+
+
 `--checklist-collect=STR` (default `src`)
 
 This explicitly indicates to collect target coverage results. If not specified,
