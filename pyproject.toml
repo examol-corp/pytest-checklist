@@ -19,7 +19,7 @@ maintainers = [
 ]
 keywords = ['plugin', 'pytest', 'unit test']
 
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "rich",
     "libcst",
