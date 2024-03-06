@@ -11,8 +11,8 @@ readme = 'README.md'
 license = "MIT"
 
 authors = [
-        { name = "Jack Klimov" },
         { name = "Samuel Lotz", email = "salotz@salotz.info"},
+        { name = "Jack Klimov" },
 ]
 maintainers = [
         { name = "Samuel Lotz", email = "salotz@salotz.info"},

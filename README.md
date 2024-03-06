@@ -256,5 +256,9 @@ hatch run format
 hatch run test
 ```
 
-### Building
+### Building and Publishing
 
+```sh
+hatch build
+hatch publish
+```
