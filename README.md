@@ -116,32 +116,40 @@ This package adds a couple new options to the `pytest` CLI:
 
 `--checklist-collect=STR` (default `src`)
 
-This explicitly indicates to collect unit coverage results. If not specified,
+This explicitly indicates to collect target coverage results. If not specified,
 but `--checklist-report` is given results will be collected using the default.
 
-`--checklist-ignore=STR` (default `''`)
-
-Specify files via a comma separated list of glob pattern relative to the
-`--checklist-collect` root directory to ignore. For example
-`utils.py,no_unit/*.py`.
 
 `--checklist-report` (default `False`)
 
 When this flag is given a textual report will be given at the end of the test
 run. Note that even if this is not given the coverage checks will still be run.
 
-`--checklist-func-min-pass=INT` (default `2`)
+`--checklist-func-min-pass=INT` (default `1`)
 
-This flag controls the number of unit test pointer marks are needed to get a
-"passing" unit. In the report units with 0 pointers are shown as red, passing
-numbers are green, and anything in between is blue.
+This flag controls the number of target test pointer marks are needed to
+get a "passing" target.
 
-`--checklist-fail-under=FLOAT` (default `0.0`)
+`--checklist-fail-under=FLOAT` (default `100.0`)
 
-This flag controls the percentage of passing units are needed for the entire
+This flag controls the percentage of passing targets are needed for the entire
 coverage check to pass. The percentage is always displayed even without
 `--checklist-report`. If this test is failed then the test process exits with
 code 1, which is useful for things like CI.
+
+`--checklist-exclude=STR` (default `''`)
+
+Specify files via a comma separated list of glob pattern relative to
+the `--checklist-collect` root directory to ignore. For example
+`utils.py,no_unit/*.py`. Because excluded files will not be collected,
+targets in them will not show up in the ignored target section. If you
+want to ignore specific targets use the inline comments.
+
+`--checklist-report-ignored` (default `False`)
+
+When this flag is given the final report will also display the ignored
+targets that were collected but will not fail. Note that anything
+excluded will not be in this collection.
 
 
 #### Example
