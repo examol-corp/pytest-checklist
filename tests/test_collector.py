@@ -13,19 +13,19 @@ from pytest_checklist.collector import (
 
 
 @pytest.mark.pointer(target=detect_files)
-def test_detect_files(test_data_dir):
-    assert len(detect_files(test_data_dir / "detect_files")) == 2
+def test_detect_files(datadir):
+    assert len(detect_files(datadir / "detect_files")) == 2
 
 
 @pytest.mark.pointer(target=resolve_fq_modules)
-def test_resolve_fq_modules(test_data_dir):
+def test_resolve_fq_modules(datadir):
 
     expected_module_fqs = [
         "mymodule.thing",
         "mymodule.other",
     ]
 
-    search_dir = test_data_dir / "resolve_fq_modules"
+    search_dir = datadir / "resolve_fq_modules"
     modpath = search_dir / "mymodule"
     submod_paths = [
         modpath / "thing.py",
@@ -44,9 +44,9 @@ def test_resolve_fq_modules(test_data_dir):
 
 
 @pytest.mark.pointer(target=resolve_fq_targets)
-def test_resolve_fq_targets(test_data_dir):
+def test_resolve_fq_targets(datadir):
 
-    search_dir = test_data_dir / "resolve_fq_targets"
+    search_dir = datadir / "resolve_fq_targets"
     modpath = search_dir / "mymodule"
     submod_paths = modpath.glob("**/*.py")
 
