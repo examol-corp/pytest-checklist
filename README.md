@@ -238,8 +238,22 @@ You will need to run this once to have hooks run on git pre-commit:
 ```sh
 lefthook install
 ```
+### Python Bootstrapping
+
+If you want you can bootstrap python installations with Hatch:
+
+```sh
+hatch python install --private 3.12
+```
+
+Be sure to check the documentation to make sure your site
+configuration of Hatch makes sense.
+
+If you don't do this you will be responsible for installing a version
+of python for development declared in the environment.
 
 ### Testing, linting, etc.
+
 
 You can just run all QA with:
 

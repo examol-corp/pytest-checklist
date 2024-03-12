@@ -4,6 +4,8 @@ path = "src/pytest_checklist/__about__.py"
 
 [envs.default]
 
+python = "3.12"
+
 dependencies = [
     "pytest",
     "black",
