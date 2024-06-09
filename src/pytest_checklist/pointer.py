@@ -1,21 +1,30 @@
 from dataclasses import dataclass
-from typing import Callable, Any
+from typing import Any, Callable
 
 import pytest
 
 
 @dataclass
 class Pointer:
-    target: Callable[..., Any]
+    target: Callable[..., Any] | property
     full_name: str
 
 
 def resolve_target_pointer(target: Callable[..., Any]) -> Pointer:
+    # NOTE: currently only supports functions and properties
 
-    # NOTE: currently only supports functions
+    if isinstance(target, property):
+        module = target.fget.__module__
+        qualname = target.fget.__qualname__
+    else:
+        module = target.__module__
+        qualname = target.__qualname__
+
+    full_name = f"{module}.{qualname}"
+
     return Pointer(
         target=target,
-        full_name=f"{target.__module__}.{target.__qualname__}",
+        full_name=full_name,
     )
 
 
