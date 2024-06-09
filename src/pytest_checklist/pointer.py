@@ -10,7 +10,7 @@ class Pointer:
     full_name: str
 
 
-def resolve_target_pointer(target: Callable[..., Any]) -> Pointer:
+def resolve_target_pointer(target: Callable[..., Any] | property) -> Pointer:
     # NOTE: currently only supports functions and properties
 
     if isinstance(target, property):
