@@ -14,6 +14,9 @@ def resolve_target_pointer(target: Callable[..., Any] | property) -> Pointer:
     # NOTE: currently only supports functions and properties
 
     if isinstance(target, property):
+        if target.fget is None:
+            raise ValueError("Property getter must be set")
+
         module = target.fget.__module__
         qualname = target.fget.__qualname__
     else:
