@@ -1,7 +1,10 @@
 import pytest
 
-from pytest_checklist.pointer import (Pointer, resolve_pointer_mark_target,
-                                      resolve_target_pointer)
+from pytest_checklist.pointer import (
+    Pointer,
+    resolve_pointer_mark_target,
+    resolve_target_pointer,
+)
 
 pointer = pytest.mark.pointer
 
