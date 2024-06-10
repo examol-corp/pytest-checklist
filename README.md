@@ -218,10 +218,8 @@ END Checklist unit coverage
 
 ## Installation
 
-Just install from this git repository:
-
 ``` shell
-pip install git+https://github.com/examol-corp/pytest-checklist.git
+pip install pytest-checklist
 ```
 
 ## Contributing
@@ -276,9 +274,8 @@ hatch run format
 hatch run test
 ```
 
-### Building and Publishing
+### Building
 
 ```sh
 hatch build
-hatch publish
 ```
