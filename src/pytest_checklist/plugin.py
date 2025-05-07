@@ -7,7 +7,11 @@ from rich.console import Console
 
 from pytest_checklist.pointer import resolve_pointer_mark_target
 from pytest_checklist.app import is_passing, resolve_exclude_patterns, TargetReport
-from pytest_checklist.defaults import DEFAULT_MIN_NUM_POINTERS, DEFAULT_PASS_THRESHOLD
+from pytest_checklist.defaults import (
+    DEFAULT_MIN_NUM_POINTERS,
+    DEFAULT_PASS_THRESHOLD,
+    DEFAULT_COLLECT_PATH,
+)
 from pytest_checklist.collector import (
     collect_case_passes,
     detect_files,
@@ -35,7 +39,7 @@ def pytest_addoption(parser) -> None:  # nochecklist:
         dest="checklist_target_min_pass",
         default=DEFAULT_MIN_NUM_POINTERS,
         type=int,
-        help="Minimum number of pointer marks for a unit to pass.",
+        help=f"Minimum number of pointer marks for a unit to pass.\nDefault {DEFAULT_MIN_NUM_POINTERS}",
     )
     group.addoption(
         "--checklist-fail-under",
@@ -43,13 +47,13 @@ def pytest_addoption(parser) -> None:  # nochecklist:
         dest="checklist_fail_under",
         default=DEFAULT_PASS_THRESHOLD,
         type=float,
-        help="Minimum percentage of units to pass (exit 0), if greater than exit 1.",
+        help=f"Minimum percentage of units to pass (exit 0), if greater than exit 1.\nDefault: {DEFAULT_PASS_THRESHOLD}",
     )
     group.addoption(
         "--checklist-collect",
         dest="checklist_collect",
-        default="src",
-        help="Gather targets and tests for them",
+        default=DEFAULT_COLLECT_PATH,
+        help=f"Gather targets and tests for them. \nDefault: '{DEFAULT_COLLECT_PATH}'",
     )
     group.addoption(
         "--checklist-exclude",
@@ -62,7 +66,7 @@ def pytest_addoption(parser) -> None:  # nochecklist:
         action="store_true",
         dest="checklist_report_ignored",
         default=False,
-        help="Show ignored units in checklist report.",
+        help="Show ignored units in checklist report.\nDefault: ''",
     )
     group.addoption(
         "--checklist-report-passing",
