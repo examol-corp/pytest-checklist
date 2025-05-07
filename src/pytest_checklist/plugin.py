@@ -1,3 +1,4 @@
+import warnings
 from pathlib import Path
 import sys
 import itertools as it
@@ -19,6 +20,7 @@ from pytest_checklist.collector import (
     resolve_fq_targets,
 )
 from pytest_checklist.report import make_report
+from pytest_checklist.path_utils import find_top_level_module_dir
 
 CACHE_TARGETS = "checklist/targets"
 CACHE_ALL_FUNC = "checklist/funcs"
@@ -55,6 +57,21 @@ def pytest_addoption(parser) -> None:  # nochecklist:
         default=DEFAULT_COLLECT_PATH,
         help=f"Gather targets and tests for them. \nDefault: '{DEFAULT_COLLECT_PATH}'",
     )
+
+    group.addoption(
+        "--checklist-infer-search-module",
+        action="store_true",
+        dest="checklist_infer_search_module",
+        default=False,
+        help=(
+            "If set, will automatically infer the search path for target modules from the `--checklist-collect` option. "
+            "Will find the first directory in an upward search without an `__init__.py` file. \n"
+            "If not set the first path from `sys.path` that matches the `--checklist-collect` will be used, which might be erroneous. "
+            "This controls the resolved fully-qualified names for target modules/functions. \n"
+            "WARNING: Currently the default is set to the old behavior but this will likely be deprecated and we encourage you to use this flag moving forward as the automatic `sys.path` mechanism will be deprecated."
+        ),
+    )
+
     group.addoption(
         "--checklist-exclude",
         dest="checklist_exclude",
@@ -89,6 +106,15 @@ def pytest_sessionstart(session: pytest.Session) -> None:  # nochecklist:
 
         if session.config.cache is not None:
             session.config.cache.set(CACHE_TARGETS, {})
+
+    # Emit a deprecation warning for the infer-search-module
+    if not session.config.option.checklist_infer_search_module:
+
+        warnings.warn(
+            "`--checklist-infer-search-module` will become the default behavior in the next MINOR release.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -166,9 +192,40 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
     # first collect all files to look in
     check_paths, _ = detect_files(source_dir, list(exclude_patterns))
 
+    # NOTE: This is important because this will enable correct
+    # resolution of the fully-qualified names of modules/functions
+    #
+    # TODO: Currently we make this optional and use the sys.path
+    # search as the legacy behavior. This is probably something that
+    # should be deprecated though.
+    #
+    # Optionally, constrain the search path for the
+    # modules. Automatically detect the root of the module from the
+    # 'checklist_collect' option based on an upward search of finding
+    # an __init__.py file.
+
+    if session.config.option.checklist_infer_search_module:
+
+        maybe_module_path = find_top_level_module_dir(source_dir)
+
+        if maybe_module_path is None:
+            raise ValueError(
+                f"No module search path resolved from --checklist-collect directory {source_dir}"
+            )
+
+        else:
+            module_search_path = maybe_module_path
+
+    # the legacy behavior
+    else:
+        sys_paths = [Path(p) for p in sys.path]
+
+        # grab the first matching path
+        module_search_path = min(set(source_dir.parents) & set(sys_paths))
+
     check_modules = resolve_fq_modules(
         check_paths,
-        [Path(p) for p in sys.path],
+        module_search_path,
     )
 
     targets = resolve_fq_targets(check_modules)

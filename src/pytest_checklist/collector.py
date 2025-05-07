@@ -80,15 +80,18 @@ class Target:
 
 def resolve_fq_modules(
     module_paths: list[Path],
-    search_paths: list[Path],
+    search_path: Path,
 ) -> list[Module]:
 
     modules = []
     for module_path in module_paths:
 
         # first get the module that this file comes from
-        source = min(set(module_path.parents) & set(search_paths))
-        abs_import = module_path.parts[len(source.parts) : -1] + (module_path.stem,)
+        # source = min(set(module_path.parents) & set(search_paths))
+
+        abs_import = module_path.parts[len(search_path.parts) : -1] + (
+            module_path.stem,
+        )
 
         fq_module_name = ".".join(abs_import)
 
