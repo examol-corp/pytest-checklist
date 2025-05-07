@@ -222,6 +222,10 @@ END Checklist unit coverage
 pip install pytest-checklist
 ```
 
+## Limitations
+
+`pytest-checklist` does not work with `pytest-xdist` currently.
+
 ## Contributing
 
 You must install [hatch](https://hatch.pypa.io/latest/).
