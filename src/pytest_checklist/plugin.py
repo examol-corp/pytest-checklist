@@ -168,12 +168,6 @@ def _pointer_marker(request) -> None:  # nochecklist:
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtestloop(session) -> None:  # nochecklist:
 
-    # do the report here so we can give the exit code, in pytest_sessionfinish
-    # you cannot alter the exit code
-
-    # run the inner hook
-    yield
-
     # after the runtestloop is finished we can generate the report etc.
 
     target_pointers = session.config.cache.get(CACHE_TARGETS, {})
@@ -218,10 +212,10 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
 
     # the legacy behavior
     else:
+        # grab the first matching path from sys.path
         sys_paths = [Path(p) for p in sys.path]
-
-        # grab the first matching path
-        module_search_path = min(set(source_dir.parents) & set(sys_paths))
+        matches = ({source_dir} | set(source_dir.parents)) & set(sys_paths)
+        module_search_path = min(matches)
 
     check_modules = resolve_fq_modules(
         check_paths,
@@ -229,6 +223,12 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
     )
 
     targets = resolve_fq_targets(check_modules)
+
+    # do the report here so we can give the exit code, in pytest_sessionfinish
+    # you cannot alter the exit code
+
+    # run the inner hook
+    yield
 
     # collect the pass/fails for all the units
     target_results = collect_case_passes(
