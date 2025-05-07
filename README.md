@@ -117,13 +117,17 @@ This package adds a couple new options to the `pytest` CLI:
 `--checklist-disabled` (default `False`)
 
 When this is given will explicitly disable this plugin from all
-collection and reporting. Useful for running non-unit tests.
+collection and reporting. Useful for running non-unit tests. Automatic
+disablement also occurs when neither `--checklist-collect` or
+`--checklist-report` are provided.
 
 
-`--checklist-collect=STR` (default `src`)
+`--checklist-collect=STR` (default `''`)
 
-This explicitly indicates to collect target coverage results. If not specified,
-but `--checklist-report` is given results will be collected using the default.
+This explicitly indicates to collect target coverage results. An empty
+string indicates not set. For the current directory specify `'.'`. If
+empty, but `--checklist-report` is given results will be collected
+using the default.
 
 
 `--checklist-report` (default `False`)

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- When neither `--checklist-collect` nor `--checklist-report` are
+  given `pytest-checklist` is disabled.
+- When the value for `--checklist-collect=''` (empty string) no
+  collection will take place.
+- The default for `--checklist-collect` is now an empty string.
+
+### Added
+
+- `--checklist-disabled` flag is supported. Which overrides any other
+  option.
+
 ### Fixed
 
 - Fixed internal bug for the module search path when not setting

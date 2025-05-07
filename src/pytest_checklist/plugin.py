@@ -29,6 +29,13 @@ CACHE_ALL_FUNC = "checklist/funcs"
 def pytest_addoption(parser) -> None:  # nochecklist:
     group = parser.getgroup("checklist")
     group.addoption(
+        "--checklist-disabled",
+        action="store_true",
+        dest="checklist_disabled",
+        default=False,
+        help="Disable pytest-checklist. Overrides other options.",
+    )
+    group.addoption(
         "--checklist-report",
         action="store_true",
         dest="checklist_report",
@@ -98,23 +105,32 @@ def pytest_configure(config) -> None:  # nochecklist:
     config.addinivalue_line("markers", "pointer(element): Define a tested element.")
 
 
+def is_disabled(config) -> bool:
+
+    if config.option.checklist_disabled:
+        return True
+
+    elif config.option.checklist_collect == "" and not config.option.checklist_report:
+        return True
+    else:
+        return False
+
+
 def pytest_sessionstart(session: pytest.Session) -> None:  # nochecklist:
-    if (
-        session.config.option.checklist_collect
-        or session.config.option.checklist_report
-    ):
+
+    if not is_disabled(session.config):
 
         if session.config.cache is not None:
             session.config.cache.set(CACHE_TARGETS, {})
 
-    # Emit a deprecation warning for the infer-search-module
-    if not session.config.option.checklist_infer_search_module:
+        # Emit a deprecation warning for the infer-search-module
+        if not session.config.option.checklist_infer_search_module:
 
-        warnings.warn(
-            "`--checklist-infer-search-module` will become the default behavior in the next MINOR release.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
+            warnings.warn(
+                "`--checklist-infer-search-module` will become the default behavior in the next MINOR release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -126,10 +142,7 @@ def _pointer_marker(request) -> None:  # nochecklist:
 
     """
 
-    if (
-        not request.config.option.checklist_collect
-        and not request.config.option.checklist_report
-    ):
+    if is_disabled(request.config):
         return None
 
     # load the cached pointers, or create if not existing
@@ -168,122 +181,128 @@ def _pointer_marker(request) -> None:  # nochecklist:
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtestloop(session) -> None:  # nochecklist:
 
-    # after the runtestloop is finished we can generate the report etc.
+    if is_disabled(session.config):
+        yield
+    else:
 
-    target_pointers = session.config.cache.get(CACHE_TARGETS, {})
+        # after the runtestloop is finished we can generate the report etc.
 
-    start_dir = Path(session.startdir)
+        target_pointers = session.config.cache.get(CACHE_TARGETS, {})
 
-    # the collect option can also tell where to start within the project,
-    # otherwise it will collect a lot of wrong paths in virtualenvs etc.
-    source_dir = start_dir / session.config.option.checklist_collect
+        start_dir = Path(session.startdir)
 
-    # parse the exclude paths
-    exclude_patterns = resolve_exclude_patterns(session.config.option.checklist_exclude)
+        # the collect option can also tell where to start within the project,
+        # otherwise it will collect a lot of wrong paths in virtualenvs etc.
+        source_dir = start_dir / session.config.option.checklist_collect
 
-    # collect all the functions by scanning the source code
+        # parse the exclude paths
+        exclude_patterns = resolve_exclude_patterns(
+            session.config.option.checklist_exclude
+        )
 
-    # first collect all files to look in
-    check_paths, _ = detect_files(source_dir, list(exclude_patterns))
+        # collect all the functions by scanning the source code
 
-    # NOTE: This is important because this will enable correct
-    # resolution of the fully-qualified names of modules/functions
-    #
-    # TODO: Currently we make this optional and use the sys.path
-    # search as the legacy behavior. This is probably something that
-    # should be deprecated though.
-    #
-    # Optionally, constrain the search path for the
-    # modules. Automatically detect the root of the module from the
-    # 'checklist_collect' option based on an upward search of finding
-    # an __init__.py file.
+        # first collect all files to look in
+        check_paths, _ = detect_files(source_dir, list(exclude_patterns))
 
-    if session.config.option.checklist_infer_search_module:
+        # NOTE: This is important because this will enable correct
+        # resolution of the fully-qualified names of modules/functions
+        #
+        # TODO: Currently we make this optional and use the sys.path
+        # search as the legacy behavior. This is probably something that
+        # should be deprecated though.
+        #
+        # Optionally, constrain the search path for the
+        # modules. Automatically detect the root of the module from the
+        # 'checklist_collect' option based on an upward search of finding
+        # an __init__.py file.
 
-        maybe_module_path = find_top_level_module_dir(source_dir)
+        if session.config.option.checklist_infer_search_module:
 
-        if maybe_module_path is None:
-            raise ValueError(
-                f"No module search path resolved from --checklist-collect directory {source_dir}"
+            maybe_module_path = find_top_level_module_dir(source_dir)
+
+            if maybe_module_path is None:
+                raise ValueError(
+                    f"No module search path resolved from --checklist-collect directory {source_dir}"
+                )
+
+            else:
+                module_search_path = maybe_module_path
+
+        # the legacy behavior
+        else:
+            # grab the first matching path from sys.path
+            sys_paths = [Path(p) for p in sys.path]
+            matches = ({source_dir} | set(source_dir.parents)) & set(sys_paths)
+            module_search_path = min(matches)
+
+        check_modules = resolve_fq_modules(
+            check_paths,
+            module_search_path,
+        )
+
+        targets = resolve_fq_targets(check_modules)
+
+        # do the report here so we can give the exit code, in pytest_sessionfinish
+        # you cannot alter the exit code
+
+        # run the inner hook
+        yield
+
+        # collect the pass/fails for all the units
+        target_results = collect_case_passes(
+            target_pointers,
+            it.chain(*targets.values()),
+        )
+
+        target_min_pass = session.config.option.checklist_target_min_pass
+        fail_under = session.config.option.checklist_fail_under
+
+        target_reports = []
+        for result in target_results:
+
+            target_reports.append(
+                TargetReport(result, passes=result.num_pointers >= target_min_pass)
             )
 
+        # test whether the whole thing passed
+        percent_passes, passes = is_passing(target_reports, fail_under)
+
+        console = Console()
+
+        console.print("")
+        console.print("")
+        console.print("----------------------")
+        console.print("Checklist unit coverage")
+        console.print("========================================")
+
+        console.print(f"Minimum number of pointers per target: {target_min_pass}")
+
+        if session.config.option.checklist_report:
+
+            report_padding = make_report(
+                target_reports,
+                show_ignored=session.config.option.checklist_report_ignored,
+                show_passing=session.config.option.checklist_report_passing,
+            )
+
+            console.print(report_padding)
+
+        if not passes:
+
+            session.testsfailed = 1
+
+            console.print(
+                f"[bold red]Checklist unit coverage failed. Target was {fail_under}, achieved {percent_passes}.[/bold red]"
+            )
+            console.print("")
+
         else:
-            module_search_path = maybe_module_path
 
-    # the legacy behavior
-    else:
-        # grab the first matching path from sys.path
-        sys_paths = [Path(p) for p in sys.path]
-        matches = ({source_dir} | set(source_dir.parents)) & set(sys_paths)
-        module_search_path = min(matches)
+            console.print(
+                f"[bold green]Checklist unit coverage passed! Target was {fail_under}, achieved {percent_passes}.[/bold green]"
+            )
+            console.print("")
 
-    check_modules = resolve_fq_modules(
-        check_paths,
-        module_search_path,
-    )
-
-    targets = resolve_fq_targets(check_modules)
-
-    # do the report here so we can give the exit code, in pytest_sessionfinish
-    # you cannot alter the exit code
-
-    # run the inner hook
-    yield
-
-    # collect the pass/fails for all the units
-    target_results = collect_case_passes(
-        target_pointers,
-        it.chain(*targets.values()),
-    )
-
-    target_min_pass = session.config.option.checklist_target_min_pass
-    fail_under = session.config.option.checklist_fail_under
-
-    target_reports = []
-    for result in target_results:
-
-        target_reports.append(
-            TargetReport(result, passes=result.num_pointers >= target_min_pass)
-        )
-
-    # test whether the whole thing passed
-    percent_passes, passes = is_passing(target_reports, fail_under)
-
-    console = Console()
-
-    console.print("")
-    console.print("")
-    console.print("----------------------")
-    console.print("Checklist unit coverage")
-    console.print("========================================")
-
-    console.print(f"Minimum number of pointers per target: {target_min_pass}")
-
-    if session.config.option.checklist_report:
-
-        report_padding = make_report(
-            target_reports,
-            show_ignored=session.config.option.checklist_report_ignored,
-            show_passing=session.config.option.checklist_report_passing,
-        )
-
-        console.print(report_padding)
-
-    if not passes:
-
-        session.testsfailed = 1
-
-        console.print(
-            f"[bold red]Checklist unit coverage failed. Target was {fail_under}, achieved {percent_passes}.[/bold red]"
-        )
-        console.print("")
-
-    else:
-
-        console.print(
-            f"[bold green]Checklist unit coverage passed! Target was {fail_under}, achieved {percent_passes}.[/bold green]"
-        )
-        console.print("")
-
-    console.print("END Checklist unit coverage")
-    console.print("========================================")
+        console.print("END Checklist unit coverage")
+        console.print("========================================")
