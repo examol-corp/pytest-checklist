@@ -185,6 +185,9 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
         yield
     else:
 
+        # run the inner hook
+        yield
+
         # after the runtestloop is finished we can generate the report etc.
 
         target_pointers = session.config.cache.get(CACHE_TARGETS, {})
@@ -245,9 +248,6 @@ def pytest_runtestloop(session) -> None:  # nochecklist:
 
         # do the report here so we can give the exit code, in pytest_sessionfinish
         # you cannot alter the exit code
-
-        # run the inner hook
-        yield
 
         # collect the pass/fails for all the units
         target_results = collect_case_passes(
